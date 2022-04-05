@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  development:
+    container_name: "rocket_app_development"
+    image: "rocket_app_development"
+    build:
+      context: ./app
+      dockerfile: ../docker/development.Dockerfile
+      args:
+        USERNAME: ${USER:-dev}
+        USER_UID: ${UID:-1000}
+        USER_GID: ${GID:-1000}
+    volumes:
+      - .:/code
+      - $HOME/.ssh:$HOME/.ssh:ro
+      - $HOME/.gitconfig:$HOME/.gitconfig:cached
+      - $HOME/.bashrc:/root/.bashrc:ro
+    networks:
+      - development
+    ports:
+      - 8000:8000
+    environment:
+      ROCKET_DATABASES: "{mysql={url=\"mysql://root:${MYSQL_ROOT_PASSWORD}@mysql/${MYSQL_DATABASE}\"}}"
+      BASIC_AUTH_USER: ${BASIC_AUTH_USER}
+      BASIC_AUTH_PASS: ${BASIC_AUTH_PASS}
+      
+
+  mysql:
+    container_name: mysql
+    image: "mysql:5.7"
+    volumes:
+      - mydata:/var/lib/mysql
+    networks:
+      - development
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+
+volumes:
+  mydata:
+
+networks:
+  development:
+    driver: bridge
